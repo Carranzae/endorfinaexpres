@@ -63,9 +63,9 @@ export default function SubscribeSection() {
                 ¡Felicidades! Gracias por unirte a la Familia Endorfina. Se te ha entregado un 10% de descuento en tu próximo pedido.
              </div>
              <p className="text-gray-700 font-medium mb-6" style={{ fontFamily: "Poppins, sans-serif" }}>
-               Recuerda: tu correo es tu usuario y tu contraseña es tu número de teléfono.
+               Recuerda: tu correo es tu usuario y tu contraseña es tu celular.
              </p>
-             <a href="/login" className="bg-[#111] text-white px-8 py-3 font-bold border-2 border-[#111] uppercase tracking-widest hover:bg-[#E6FF00] hover:text-[#111] transition-colors" style={{ fontFamily: "Oswald, sans-serif" }}>
+             <a href="/customer/login" className="bg-[#111] text-white px-8 py-3 font-bold border-2 border-[#111] uppercase tracking-widest hover:bg-[#E6FF00] hover:text-[#111] transition-colors" style={{ fontFamily: "Oswald, sans-serif" }}>
                Iniciar Sesión y ver mis puntos
              </a>
           </div>

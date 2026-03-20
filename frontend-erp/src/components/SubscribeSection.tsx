@@ -57,6 +57,7 @@ export default function SubscribeSection() {
           Déjanos tu correo y recibe al instante tu código de descuento para tu próximo pedido.
         </p>
 
+        {submitted ? (
           <div className="flex flex-col items-center">
              <div className="bg-[#22C55E] text-white px-6 md:px-8 py-4 font-bold uppercase tracking-widest text-lg md:text-xl border-2 border-[#111] shadow-[4px_4px_0_0_#111] mb-6 text-center">
                 ¡Felicidades! Gracias por unirte a la Familia Endorfina. Se te ha entregado un 10% de descuento en tu próximo pedido.

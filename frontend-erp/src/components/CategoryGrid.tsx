@@ -14,29 +14,29 @@ const CATEGORIES = [
 
 export default function CategoryGrid() {
   return (
-    <section className="w-full bg-[#FDF9F6] py-12 lg:py-16 px-6 lg:px-12 border-t-4 border-[#111]">
+    <section className="w-full bg-[#FDF9F6] py-10 lg:py-16 px-4 lg:px-12 border-t-4 border-[#111]">
       <div className="max-w-7xl mx-auto">
         <h2 
-          className="text-4xl lg:text-6xl font-black text-center text-[#111] uppercase tracking-tighter mb-10"
+          className="text-3xl md:text-5xl lg:text-6xl font-black text-center text-[#111] uppercase tracking-tighter mb-8 lg:mb-10"
           style={{ fontFamily: "Oswald, sans-serif" }}
         >
           ¿QUÉ VAS A COMER HOY?
         </h2>
         
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-6">
           {CATEGORIES.map((cat) => (
             <a 
               key={cat.id} 
               href="#menu"
-              className="group bg-white flex flex-col items-center justify-center p-6 border-2 border-[#111] shadow-[4px_4px_0_0_#111] hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#111] hover:bg-[#E6FF00] transition-all rounded-sm"
+              className="group bg-white flex flex-col items-center justify-center p-4 lg:p-6 border-2 border-[#111] shadow-[4px_4px_0_0_#111] hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#111] hover:bg-[#E6FF00] transition-all rounded-sm"
             >
-              <div className="w-16 h-16 lg:w-20 lg:h-20 bg-[#FDF9F6] border-2 border-[#111] rounded-full flex items-center justify-center mb-4 group-hover:bg-white transition-colors">
-                <span className="material-symbols-outlined text-3xl lg:text-4xl text-[#111]">
+              <div className="w-12 h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 bg-[#FDF9F6] border-2 border-[#111] rounded-full flex items-center justify-center mb-3 lg:mb-4 group-hover:bg-white transition-colors">
+                <span className="material-symbols-outlined text-2xl lg:text-4xl text-[#111]">
                   {cat.icon}
                 </span>
               </div>
               <h3 
-                className="text-xl lg:text-3xl font-bold uppercase text-[#111] tracking-tight text-center"
+                className="text-lg lg:text-3xl font-bold uppercase text-[#111] tracking-tight text-center"
                 style={{ fontFamily: "Oswald, sans-serif" }}
               >
                 {cat.name}

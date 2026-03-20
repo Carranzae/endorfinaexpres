@@ -18,10 +18,10 @@ export default function HeroPickadeli() {
           
           {/* Text block */}
           <div className="flex flex-col">
-            <h2 className="text-2xl lg:text-4xl font-black text-[#111] uppercase tracking-tight leading-none" style={{ fontFamily: "Oswald, sans-serif" }}>
+            <h2 className="text-xl md:text-2xl lg:text-4xl font-black text-[#111] uppercase tracking-tight leading-none" style={{ fontFamily: "Oswald, sans-serif" }}>
               VER CARTA
             </h2>
-            <p className="text-[#111] font-medium text-sm lg:text-base tracking-tight" style={{ fontFamily: "Poppins, sans-serif" }}>
+            <p className="text-[#111] font-medium text-xs md:text-sm lg:text-base tracking-tight leading-tight mt-1" style={{ fontFamily: "Poppins, sans-serif" }}>
               ¡Conoce todo lo que tenemos para ti!
             </p>
           </div>
@@ -53,18 +53,18 @@ export default function HeroPickadeli() {
           <div className="absolute bottom-10 left-6 lg:bottom-16 lg:left-12 flex flex-col items-start z-10">
             <motion.div 
               initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}
-              className="bg-[#22C55E] text-white px-4 py-1 mb-2 transform -rotate-2 border border-[#111]"
+              className="bg-[#22C55E] text-white px-3 py-1 mb-1 lg:mb-2 transform -rotate-2 border border-[#111]"
             >
-              <span className="font-bold text-lg lg:text-xl uppercase tracking-widest" style={{ fontFamily: "Oswald, sans-serif" }}>
+              <span className="font-bold text-sm md:text-lg lg:text-xl uppercase tracking-widest" style={{ fontFamily: "Oswald, sans-serif" }}>
                 Sabor Indiscutible
               </span>
             </motion.div>
             
             <motion.div 
               initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, delay: 0.2 }}
-              className="bg-[#7DD3FC] text-[#111] px-5 py-2 transform -rotate-1 border-2 border-[#111] shadow-[4px_4px_0_0_#111]"
+              className="bg-[#7DD3FC] text-[#111] px-3 md:px-5 py-1 md:py-2 transform -rotate-1 border-2 border-[#111] shadow-[4px_4px_0_0_#111]"
             >
-              <h1 className="text-3xl lg:text-6xl font-black uppercase tracking-tight" style={{ fontFamily: "Oswald, sans-serif" }}>
+              <h1 className="text-2xl md:text-4xl lg:text-6xl font-black uppercase tracking-tight" style={{ fontFamily: "Oswald, sans-serif" }}>
                 NUEVOS COMBOS
               </h1>
             </motion.div>
@@ -73,12 +73,12 @@ export default function HeroPickadeli() {
       </div>
       
       {/* PIDE AQUI BUTTON */}
-      <div className="w-full px-6 lg:px-12 flex justify-center mt-10">
+      <div className="w-full px-4 lg:px-12 flex justify-center mt-6 md:mt-10">
         <a 
           href="#menu"
-          className="bg-[#111] text-white px-12 py-4 lg:py-5 min-w-[200px] lg:min-w-[300px] text-center border-2 border-transparent hover:border-[#111] hover:bg-white hover:text-[#111] transition-colors rounded-sm shadow-[4px_4px_0_0_rgba(0,0,0,0.2)]"
+          className="bg-[#111] text-white px-8 md:px-12 py-3 lg:py-5 w-full md:w-auto min-w-[200px] lg:min-w-[300px] text-center border-2 border-transparent hover:border-[#111] hover:bg-white hover:text-[#111] transition-colors rounded-sm shadow-[4px_4px_0_0_rgba(0,0,0,0.2)]"
         >
-          <span className="text-2xl lg:text-3xl font-bold uppercase tracking-widest" style={{ fontFamily: "Oswald, sans-serif" }}>PIDE AQUÍ</span>
+          <span className="text-xl md:text-2xl lg:text-3xl font-bold uppercase tracking-widest" style={{ fontFamily: "Oswald, sans-serif" }}>PIDE AQUÍ</span>
         </a>
       </div>
     </section>

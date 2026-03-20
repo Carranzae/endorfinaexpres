@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Oswald, Poppins } from "next/font/google";
 import "./globals.css";
+import CookieConsentModal from "@/components/CookieConsentModal";
 
 // Optimize font loading
 const oswald = Oswald({
@@ -48,7 +49,10 @@ export default function RootLayout({
         <meta name="theme-color" content="#1c1c1c" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
       </head>
-      <body className={poppins.className}>{children}</body>
+      <body className={poppins.className}>
+        {children}
+        <CookieConsentModal />
+      </body>
     </html>
   );
 }

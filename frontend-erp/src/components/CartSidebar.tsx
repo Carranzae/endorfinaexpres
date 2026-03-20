@@ -13,22 +13,56 @@ export default function CartSidebar() {
   const [ordering, setOrdering] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderError, setOrderError] = useState("");
+  const [showCheckout, setShowCheckout] = useState(false);
 
-  const sendToBackend = async () => {
+  // Form State
+  const [formData, setFormData] = useState({
+    nombres: '',
+    direccion: '',
+    telefono: '',
+    referencia: '',
+    metodoPago: 'Yape / Plin',
+  });
+
+  const handleCheckoutSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setOrdering(true);
     setOrderError("");
+
     try {
       await api.post("/orders", {
-        customerName: "Cliente Web",
+        customerName: formData.nombres,
         type: "DELIVERY",
+        notes: `Dir: ${formData.direccion} | Ref: ${formData.referencia} | Tel: ${formData.telefono} | Pago: ${formData.metodoPago}`,
         items: items.map(i => ({ productId: i.id, quantity: i.quantity, unitPrice: i.price })),
         total: getTotal(),
       });
+
+      // Prepare WhatsApp Message
+      let msg = "🍽️ *NUEVO PEDIDO ONLINE – ENDORFINA EXPRESS*\n\n";
+      msg += `*Cliente:* ${formData.nombres}\n`;
+      msg += `*Teléfono:* ${formData.telefono}\n`;
+      msg += `*Dirección:* ${formData.direccion}\n`;
+      if(formData.referencia) msg += `*Referencia:* ${formData.referencia}\n`;
+      msg += `*Medio de pago:* ${formData.metodoPago}\n\n`;
+      msg += `*🛒 Detalle del pedido:*\n`;
+      items.forEach(i => {
+        msg += `• ${i.quantity}x ${i.name} — S/ ${(i.price * i.quantity).toFixed(2)}\n`;
+      });
+      msg += `\n💰 *TOTAL PAGO: S/ ${getTotal().toFixed(2)}*\n`;
+      
+      // Abre Whatsapp
+      window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
+
       setOrderSuccess(true);
       clearCart();
-      setTimeout(() => { setOrderSuccess(false); toggleCart(); }, 3000);
+      setTimeout(() => { 
+        setOrderSuccess(false); 
+        setShowCheckout(false);
+        toggleCart(); 
+      }, 3000);
     } catch (e: any) {
-      setOrderError(e.response?.data?.message || "Error al enviar pedido. Intenta por WhatsApp.");
+      setOrderError(e.response?.data?.message || "Error al enviar pedido. Intenta nuevamente.");
     } finally {
       setOrdering(false);
     }
@@ -44,7 +78,23 @@ export default function CartSidebar() {
   };
 
   return (
-    <AnimatePresence>
+    <>
+      {/* Botón Flotante */}
+      {!isOpen && items.length > 0 && (
+        <motion.button
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          onClick={toggleCart}
+          className="fixed bottom-6 right-6 z-50 bg-[#E6FF00] text-[#111] p-4 rounded-full border-4 border-[#111] shadow-[4px_4px_0_0_#111] hover:-translate-y-2 hover:shadow-[6px_6px_0_0_#111] transition-all flex items-center justify-center group"
+        >
+          <span className="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform">shopping_cart</span>
+          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center border-2 border-[#111]">
+            {items.reduce((acc, curr) => acc + curr.quantity, 0)}
+          </span>
+        </motion.button>
+      )}
+
+      <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex justify-end">
           {/* Overlay */}
@@ -61,17 +111,55 @@ export default function CartSidebar() {
           >
             {/* Header */}
             <div className="px-6 py-5 border-b-4 border-[#1c1c1c] flex justify-between items-center bg-[#1c1c1c]">
-              <h2 className="text-white text-2xl" style={{ fontFamily: "Oswald, sans-serif" }}>
-                MI CARRITO 🛒
+              <h2 className="text-white text-2xl flex items-center gap-2" style={{ fontFamily: "Oswald, sans-serif" }}>
+                {showCheckout && (
+                  <button onClick={() => setShowCheckout(false)} className="hover:text-[#f27f0d] transition-colors material-symbols-outlined mr-2">
+                    arrow_back
+                  </button>
+                )}
+                {showCheckout ? 'FINALIZAR PEDIDO' : 'MI CARRITO 🛒'}
               </h2>
-              <button onClick={toggleCart} className="text-white hover:text-[#f27f0d] transition-colors">
+              <button 
+                onClick={() => { toggleCart(); setShowCheckout(false); }} 
+                className="text-white hover:text-[#f27f0d] transition-colors"
+              >
                 <span className="material-symbols-outlined text-3xl">close</span>
               </button>
             </div>
 
-            {/* Items */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              {items.length === 0 ? (
+            {/* Items or Checkout Form */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+              {showCheckout ? (
+                <form id="checkout-form" onSubmit={handleCheckoutSubmit} className="flex flex-col gap-4">
+                  <div>
+                    <label className="block font-bold text-[#111] mb-1 text-sm uppercase">Nombres Completos</label>
+                    <input required type="text" value={formData.nombres} onChange={e => setFormData({...formData, nombres: e.target.value})} className="w-full border-2 border-[#111] p-3 rounded-none focus:ring-4 focus:ring-[#E6FF00] outline-none" />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-[#111] mb-1 text-sm uppercase">Dirección de Entrega</label>
+                    <input required type="text" value={formData.direccion} onChange={e => setFormData({...formData, direccion: e.target.value})} className="w-full border-2 border-[#111] p-3 rounded-none focus:ring-4 focus:ring-[#E6FF00] outline-none" />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-[#111] mb-1 text-sm uppercase">Celular</label>
+                    <input required type="tel" value={formData.telefono} onChange={e => setFormData({...formData, telefono: e.target.value})} className="w-full border-2 border-[#111] p-3 rounded-none focus:ring-4 focus:ring-[#E6FF00] outline-none" />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-[#111] mb-1 text-sm uppercase">Referencia (Opcional)</label>
+                    <input type="text" value={formData.referencia} onChange={e => setFormData({...formData, referencia: e.target.value})} className="w-full border-2 border-[#111] p-3 rounded-none focus:ring-4 focus:ring-[#E6FF00] outline-none" />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-[#111] mb-1 text-sm uppercase">Método de Pago</label>
+                    <select required value={formData.metodoPago} onChange={e => setFormData({...formData, metodoPago: e.target.value})} className="w-full border-2 border-[#111] p-3 rounded-none focus:ring-4 focus:ring-[#E6FF00] outline-none font-bold bg-white">
+                      <option value="Yape / Plin">Yape o Plin</option>
+                      <option value="Efectivo">Efectivo</option>
+                      <option value="Tarjeta (POS)">Tarjeta (POS a domicilio)</option>
+                    </select>
+                  </div>
+                  <div className="bg-[#E6FF00] p-4 border-2 border-[#111] shadow-[4px_4px_0_0_#111] font-bold text-center mt-2">
+                    Total a Pagar: S/ {getTotal().toFixed(2)}
+                  </div>
+                </form>
+              ) : items.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center gap-4">
                   <span className="material-symbols-outlined text-7xl text-[#ccc]">shopping_cart</span>
                   <p className="text-xl text-gray-400" style={{ fontFamily: "Oswald, sans-serif" }}>
@@ -120,50 +208,70 @@ export default function CartSidebar() {
             {orderSuccess ? (
               <div className="p-6 border-t-4 border-[#1c1c1c] bg-[#22C55E] text-center">
                 <p className="text-white text-2xl font-black" style={{ fontFamily: "Oswald, sans-serif" }}>
-                  ✅ ¡PEDIDO ENVIADO!
+                  ✅ ¡PEDIDO REGISTRADO!
                 </p>
-                <p className="text-white/80 text-sm mt-1">Tu pedido está siendo preparado</p>
+                <p className="text-white text-sm font-bold mt-2">Redirigiendo a WhatsApp...</p>
               </div>
             ) : items.length > 0 && (
-              <div className="p-6 border-t-4 border-[#1c1c1c] bg-white space-y-3">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-bold text-gray-500 uppercase text-sm tracking-wider">Total</span>
-                  <span className="text-3xl font-black" style={{ fontFamily: "Oswald, sans-serif" }}>
-                    S/ {getTotal().toFixed(2)}
-                  </span>
-                </div>
-                {orderError && (
-                  <div className="bg-red-50 border border-red-300 rounded-lg p-3 text-red-600 text-sm">{orderError}</div>
+              <div className="p-4 md:p-6 border-t-4 border-[#1c1c1c] bg-white space-y-3">
+                {!showCheckout && (
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-bold text-gray-500 uppercase text-sm tracking-wider">Total</span>
+                    <span className="text-3xl font-black" style={{ fontFamily: "Oswald, sans-serif" }}>
+                      S/ {getTotal().toFixed(2)}
+                    </span>
+                  </div>
                 )}
-                <button
-                  onClick={sendToBackend}
-                  disabled={ordering}
-                  className="w-full py-4 rounded-xl font-bold text-white text-lg flex items-center justify-center gap-2 hover:opacity-90 transition-all hover:-translate-y-1 border-2 border-[#1c1c1c] shadow-[4px_4px_0px_0px_#1c1c1c]"
-                  style={{ backgroundColor: "#f27f0d", fontFamily: "Oswald, sans-serif", opacity: ordering ? 0.6 : 1 }}
-                >
-                  <span className="material-symbols-outlined">restaurant</span>
-                  {ordering ? "ENVIANDO..." : "🛎️ PEDIR ONLINE"}
-                </button>
-                <button
-                  onClick={sendWhatsApp}
-                  className="w-full py-4 rounded-xl font-bold text-white text-lg flex items-center justify-center gap-2 hover:opacity-90 transition-all hover:-translate-y-1 border-2 border-[#1c1c1c] shadow-[4px_4px_0px_0px_#1c1c1c]"
-                  style={{ backgroundColor: "#25D366", fontFamily: "Oswald, sans-serif" }}
-                >
-                  <span className="material-symbols-outlined">chat</span>
-                  PEDIR POR WHATSAPP
-                </button>
-                <a
-                  href={PEDIDOSYA} target="_blank" rel="noopener noreferrer"
-                  className="flex w-full py-3 rounded-xl font-bold text-white text-base items-center justify-center gap-2 hover:opacity-90 transition-all border-2 border-[#1c1c1c]"
-                  style={{ backgroundColor: "#FA0050", fontFamily: "Oswald, sans-serif" }}
-                >
-                  🍕 TAMBIÉN EN PEDIDOSYA
-                </a>
+                {orderError && (
+                  <div className="bg-red-50 border-2 border-red-500 rounded-none p-3 text-red-600 font-bold uppercase text-sm">{orderError}</div>
+                )}
+                
+                {showCheckout ? (
+                  <button
+                    type="submit"
+                    form="checkout-form"
+                    disabled={ordering}
+                    className="w-full py-4 font-black text-[#111] text-lg lg:text-xl flex items-center justify-center gap-2 hover:bg-white transition-all border-2 border-[#1c1c1c] shadow-[4px_4px_0px_0px_#1c1c1c] uppercase"
+                    style={{ backgroundColor: "#E6FF00", fontFamily: "Oswald, sans-serif", opacity: ordering ? 0.6 : 1 }}
+                  >
+                    <span className="material-symbols-outlined">send</span>
+                    {ordering ? "ENVIANDO..." : "CONFIRMAR PEDIDO"}
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setShowCheckout(true)}
+                      className="w-full py-4 font-black text-white text-lg flex items-center justify-center gap-2 hover:-translate-y-1 transition-transform border-2 border-[#1c1c1c] shadow-[4px_4px_0px_0px_#1c1c1c]"
+                      style={{ backgroundColor: "#f27f0d", fontFamily: "Oswald, sans-serif" }}
+                    >
+                      <span className="material-symbols-outlined">local_dining</span>
+                      PEDIDO ONLINE AUTOMÁTICO
+                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={sendWhatsApp}
+                        className="flex-1 py-3 font-bold text-white text-sm md:text-base flex items-center justify-center gap-1 hover:-translate-y-1 transition-transform border-2 border-[#1c1c1c] shadow-[2px_2px_0px_0px_#1c1c1c]"
+                        style={{ backgroundColor: "#25D366", fontFamily: "Oswald, sans-serif" }}
+                      >
+                        <span className="material-symbols-outlined text-[18px]">chat</span>
+                        WHATSAPP
+                      </button>
+                      <a
+                        href={PEDIDOSYA} target="_blank" rel="noopener noreferrer"
+                        className="flex-1 py-3 font-bold text-white text-sm md:text-base flex items-center justify-center gap-1 hover:-translate-y-1 transition-transform border-2 border-[#1c1c1c] shadow-[2px_2px_0px_0px_#1c1c1c]"
+                        style={{ backgroundColor: "#FA0050", fontFamily: "Oswald, sans-serif" }}
+                      >
+                        PEDIDOSYA
+                      </a>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </motion.div>
         </div>
       )}
     </AnimatePresence>
+    </>
   );
 }

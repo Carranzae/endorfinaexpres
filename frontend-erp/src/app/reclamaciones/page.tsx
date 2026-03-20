@@ -1,84 +1,83 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { api } from "@/lib/axios";
 
 export default function ReclamacionesPage() {
-  const router = useRouter();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [issue, setIssue] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({ name: "", email: "", phone: "", issue: "" });
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setStatus("loading");
+    setErrorMessage("");
     try {
-      await api.post("/complaints", {
-        name,
-        email,
-        phone,
-        issue
-      });
-      alert("¡Tu reclamo o sugerencia ha sido enviado exitosamente! Lo revisaremos pronto.");
-      setName("");
-      setEmail("");
-      setPhone("");
-      setIssue("");
-    } catch (error) {
-      alert("Error enviando el reclamo. Inténtalo de nuevo.");
-      console.error(error);
-    } finally {
-      setIsSubmitting(false);
+      await api.post("/complaints", formData);
+      setStatus("success");
+      setFormData({ name: "", email: "", phone: "", issue: "" });
+    } catch (err: any) {
+      setStatus("error");
+      setErrorMessage(err.response?.data?.message || "Ocurrió un error al enviar el reclamo.");
     }
   };
 
   return (
-    <div className="legal-container">
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;600;700&display=swap');
-        body { margin: 0; font-family: 'Inter', sans-serif; background-color: #e3d2be; color: #111; }
-        .legal-container { min-height: 100vh; padding: 40px; display: flex; justify-content: center; }
-        .legal-content { background: #fff; border: 4px solid #111; border-radius: 12px; padding: 40px; width: 100%; max-width: 800px; box-shadow: 12px 12px 0px #111; position: relative; }
-        .btn-back { position: absolute; top: -24px; left: -24px; background: #f97316; border: 3px solid #111; border-radius: 50%; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #111; box-shadow: 4px 4px 0px #111; }
-        .title { font-family: 'Oswald', sans-serif; font-size: 40px; text-transform: uppercase; margin: 0 0 20px; }
+    <div className="bg-[#FDF9F6] min-h-screen py-16 px-6 lg:px-12 font-medium" style={{ fontFamily: "Poppins, sans-serif" }}>
+      <div className="max-w-3xl mx-auto bg-white border-4 border-[#111] p-8 md:p-12 shadow-[8px_8px_0_0_#111]">
+        <div className="flex items-center gap-4 border-b-4 border-[#111] pb-6 mb-8">
+          <span className="material-symbols-outlined text-4xl md:text-5xl text-[#f27f0d]">history_edu</span>
+          <h1 className="text-3xl md:text-5xl font-black uppercase leading-tight" style={{ fontFamily: "Oswald, sans-serif" }}>
+            Libro de Reclamaciones Virtual
+          </h1>
+        </div>
+
+        <p className="text-gray-700 mb-8 border-l-4 border-[#f27f0d] pl-4 text-sm md:text-base">
+          Conforme a lo establecido en el Código de Protección y Defensa del Consumidor, contamos con un Libro de Reclamaciones Virtual. Envía tu disconformidad o reclamo a través del siguiente formulario y te responderemos a la brevedad.
+        </p>
+
+        {status === "success" ? (
+          <div className="bg-[#22C55E] text-white p-6 font-bold uppercase tracking-widest text-center border-2 border-[#111] shadow-[4px_4px_0_0_#111]">
+            ✓ RECLAMO REGISTRADO EXITOSAMENTE. NUESTRO EQUIPO TE CONTACTARÁ PRONTO.
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {status === "error" && (
+              <div className="bg-red-50 text-red-600 p-4 border-2 border-red-600 font-bold uppercase text-sm">
+                Error: {errorMessage}
+              </div>
+            )}
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-bold uppercase text-[#111] mb-2">Nombre Completo (*)</label>
+                <input required type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full border-2 border-[#111] p-3 focus:ring-4 focus:ring-[#E6FF00] outline-none rounded-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold uppercase text-[#111] mb-2">Teléfono de Contacto (*)</label>
+                <input required type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full border-2 border-[#111] p-3 focus:ring-4 focus:ring-[#E6FF00] outline-none rounded-none" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold uppercase text-[#111] mb-2">Correo Electrónico (Opcional)</label>
+              <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full border-2 border-[#111] p-3 focus:ring-4 focus:ring-[#E6FF00] outline-none rounded-none" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold uppercase text-[#111] mb-2">Detalle de la Queja o Reclamo (*)</label>
+              <textarea required rows={5} value={formData.issue} onChange={e => setFormData({ ...formData, issue: e.target.value })} className="w-full border-2 border-[#111] p-3 focus:ring-4 focus:ring-[#E6FF00] outline-none rounded-none resize-none" placeholder="Describe claramente tu inconveniente..."></textarea>
+            </div>
+
+            <button disabled={status === "loading"} type="submit" className="w-full bg-[#111] text-white py-4 font-black text-xl uppercase tracking-widest hover:bg-[#E6FF00] hover:text-[#111] transition-colors border-2 border-[#111] shadow-[4px_4px_0_0_#111] disabled:opacity-50" style={{ fontFamily: "Oswald, sans-serif" }}>
+              {status === "loading" ? "ENVIANDO..." : "REGISTRAR RECLAMO"}
+            </button>
+          </form>
+        )}
         
-        .form-label { display: block; font-family: 'Oswald', sans-serif; font-size: 16px; margin: 16px 0 8px; text-transform: uppercase; font-weight: 700; }
-        .form-input { width: 100%; padding: 12px; border: 3px solid #111; border-radius: 6px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14px; outline: none; transition: box-shadow 0.1s; }
-        .form-input:focus { box-shadow: 4px 4px 0px #f97316; }
-        .form-textarea { width: 100%; padding: 12px; border: 3px solid #111; border-radius: 6px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14px; min-height: 120px; outline: none; transition: box-shadow 0.1s; resize: vertical; }
-        .form-textarea:focus { box-shadow: 4px 4px 0px #f97316; }
-        
-        .btn-submit { background: #111; color: #fff; border: none; padding: 16px 32px; font-family: 'Oswald', sans-serif; font-size: 18px; font-weight: 700; text-transform: uppercase; margin-top: 24px; cursor: pointer; border-radius: 8px; transition: background 0.1s; }
-        .btn-submit:hover { background: #333; }
-        .btn-submit:active { transform: translateY(2px); }
-      `}</style>
-      <div className="legal-content">
-        <button className="btn-back" onClick={() => router.push("/")}><ArrowLeft size={24} strokeWidth={3} /></button>
-        <h1 className="title">Libro de Reclamaciones</h1>
-        <p>Conforme a lo establecido en el Código de Protección y Defensa del Consumidor, Endorfina Express S.A.C. cuenta con un Libro de Reclamaciones Virtual a tu disposición.</p>
-        
-        <form onSubmit={handleSubmit} style={{ marginTop: 32 }}>
-          <label className="form-label">Nombre Completo</label>
-          <input type="text" className="form-input" required value={name} onChange={e => setName(e.target.value)} placeholder="Ej. Juan Pérez" />
-
-          <label className="form-label">Correo (Opcional)</label>
-          <input type="email" className="form-input" value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@correo.com" />
-
-          <label className="form-label">Teléfono / Celular</label>
-          <input type="tel" className="form-input" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="999 999 999" />
-
-          <label className="form-label">Detalle del Reclamo / Queja</label>
-          <textarea className="form-textarea" required value={issue} onChange={e => setIssue(e.target.value)} placeholder="Describe tu reclamo o sugerencia aquí..."></textarea>
-
-          <button type="submit" className="btn-submit" disabled={isSubmitting}>
-            {isSubmitting ? "ENVIANDO..." : "ENVIAR RECLAMO"}
-          </button>
-        </form>
-
+        <div className="mt-8 text-center">
+          <a href="/" className="text-gray-500 hover:text-[#f27f0d] font-bold uppercase underline">Volver a Inicio</a>
+        </div>
       </div>
     </div>
   );

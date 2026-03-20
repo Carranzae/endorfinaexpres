@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Oswald", sans-serif;
+  --font-body:    "Poppins", sans-serif;
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+/* Pickadeli Color Palette variables mapped to CSS */
+:root {
+  --color-pick-yellow: #E6FF00; /* Their exact vibrant yellow */
+  --color-pick-blue: #7DD3FC;   /* Light vibrant blue */
+  --color-pick-green: #22C55E;  /* Vibrant green */
+  --color-pick-peach: #FDF9F6;  /* Soft off-white / peach background */
+  --color-pick-orange: #FFB085; /* Soft orange block */
+  --color-pick-black: #111111;  /* Deep black for heavy text */
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-pick-peach);
+  color: var(--color-pick-black);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  margin: 0;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--color-pick-peach); }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Category Sticky Bar hiding scroll on desktop but allow drag/wheel */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

@@ -1,0 +1,52 @@
+{
+  "name": "endorfina-printer",
+  "version": "1.0.0",
+  "description": "Servicio de impresión automática para cocina - Endorfina Express",
+  "main": "main.js",
+  "author": "Endorfina Express",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win",
+    "pack": "electron-builder --dir"
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "electron-store": "^8.1.0"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.0"
+  },
+  "build": {
+    "appId": "com.endorfina.printer",
+    "productName": "Endorfina Printer",
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "installerSidebar": null,
+      "shortcutName": "Endorfina Printer",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true
+    },
+    "files": [
+      "main.js",
+      "renderer.html",
+      "renderer.js",
+      "preload.js",
+      "icon.ico",
+      "node_modules/**/*"
+    ]
+  }
+}

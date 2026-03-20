@@ -1,0 +1,19 @@
+[build]
+  # El directorio base es donde está el package.json del frontend
+  base = "frontend-erp"
+  
+  # Comando para construir Next.js
+  command = "npm run build"
+  
+  # Carpeta de salida de Next.js
+  publish = ".next"
+
+# Este plugin es vital para que las rutas de Next.js funcionen en Netlify
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Redirecciones para evitar errores 404 al recargar rutas dinámicas
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

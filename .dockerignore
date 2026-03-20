@@ -1,0 +1,23 @@
+# Dependencies - MUST exclude to prevent Windows binaries overwriting Alpine ones
+backend-erp/node_modules
+frontend-erp/node_modules
+
+# Build outputs
+backend-erp/dist
+frontend-erp/.next
+frontend-erp/out
+
+# Environment files
+backend-erp/.env
+frontend-erp/.env.local
+**/.env
+
+# Git
+.git
+.gitignore
+
+# Uploads (runtime data, not code)
+backend-erp/uploads
+
+# Temp files
+backend-erp/temp_receipts

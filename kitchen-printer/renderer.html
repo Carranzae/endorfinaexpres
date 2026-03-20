@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Endorfina Printer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f0f14; color: #e8e8e8; min-height: 100vh; overflow-x: hidden; }
+        
+        .header { background: linear-gradient(135deg, #1a1a2e, #16162a); padding: 20px 24px; border-bottom: 1px solid #2a2a3e; display: flex; align-items: center; gap: 14px; }
+        .header .logo { font-size: 28px; }
+        .header h1 { font-size: 18px; font-weight: 700; color: #fff; }
+        .header p { font-size: 11px; color: #7c7ca0; margin-top: 2px; }
+        
+        .status-bar { padding: 10px 24px; display: flex; align-items: center; gap: 10px; background: #12121a; border-bottom: 1px solid #1e1e2e; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #ef4444; }
+        .status-dot.connected { background: #22c55e; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .status-text { font-size: 12px; font-weight: 600; }
+        .stats { margin-left: auto; display: flex; gap: 16px; font-size: 11px; color: #7c7ca0; }
+        .stats span { color: #a78bfa; font-weight: 700; }
+        
+        .container { padding: 16px 24px; }
+        
+        .section { background: #16162a; border-radius: 12px; padding: 16px 20px; margin-bottom: 14px; border: 1px solid #2a2a3e; }
+        .section-title { font-size: 12px; font-weight: 700; color: #7c7ca0; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; }
+        
+        .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .form-row.col { flex-direction: column; }
+        
+        label.small { font-size: 10px; font-weight: 600; color: #5a5a7a; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; display: block; }
+        
+        input, select { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #2a2a3e; background: #0f0f14; color: #e8e8e8; font-size: 13px; font-family: inherit; outline: none; }
+        input:focus, select:focus { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124,58,237,0.2); }
+        
+        .btn { padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; }
+        .btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-primary { background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; flex: 1; }
+        .btn-danger { background: #ef4444; color: #fff; }
+        .btn-secondary { background: #2a2a3e; color: #a0a0c0; }
+        .btn-success { background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; }
+        .btn-sm { padding: 7px 14px; font-size: 11px; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .printer-list { display: flex; flex-direction: column; gap: 6px; }
+        .printer-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; background: #0f0f14; border: 1px solid #2a2a3e; cursor: pointer; transition: all 0.15s; }
+        .printer-item:hover { border-color: #7c3aed; }
+        .printer-item.selected { border-color: #7c3aed; background: rgba(124,58,237,0.1); }
+        .printer-item .name { font-size: 13px; font-weight: 600; flex: 1; }
+        .printer-item .type-badge { font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; }
+        .type-wifi { background: #1e3a5f; color: #60a5fa; }
+        .type-usb { background: #1a3f2e; color: #4ade80; }
+        .type-bluetooth { background: #3b1f5e; color: #c084fc; }
+        
+        .log-box { background: #0a0a12; border-radius: 8px; padding: 12px; font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 11px; max-height: 160px; overflow-y: auto; border: 1px solid #1e1e2e; }
+        .log-line { padding: 2px 0; color: #7c7ca0; word-break: break-all; }
+        .log-line:last-child { color: #e8e8e8; }
+        
+        .paper-selector { display: flex; gap: 8px; }
+        .paper-option { flex: 1; padding: 10px; border-radius: 8px; border: 2px solid #2a2a3e; background: #0f0f14; text-align: center; cursor: pointer; transition: all 0.15s; }
+        .paper-option.selected { border-color: #7c3aed; background: rgba(124,58,237,0.1); }
+        .paper-option .size { font-size: 18px; font-weight: 800; color: #fff; }
+        .paper-option .label { font-size: 10px; color: #7c7ca0; margin-top: 2px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <span class="logo">☕</span>
+        <div>
+            <h1>ENDORFINA PRINTER</h1>
+            <p>Servicio de impresión automática para cocina</p>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-dot" id="statusDot"></div>
+        <span class="status-text" id="statusText">Desconectado</span>
+        <div class="stats">
+            <div>Pendientes: <span id="pendingCount">0</span></div>
+            <div>Impresos: <span id="printedCount">0</span></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Connection Config -->
+        <div class="section">
+            <div class="section-title">🔗 Conexión al Servidor</div>
+            <div class="form-row col">
+                <label class="small">URL del Servidor</label>
+                <input id="apiUrl" placeholder="https://endorfinaexpres-production.up.railway.app" />
+            </div>
+            <div class="form-row">
+                <div style="flex:1"><label class="small">Email Admin</label><input id="email" type="email" placeholder="admin@email.com" /></div>
+                <div style="flex:1"><label class="small">Contraseña</label><input id="password" type="password" placeholder="••••••" /></div>
+            </div>
+            <div class="form-row">
+                <button class="btn btn-primary" id="btnConnect" onclick="connect()">🔌 Conectar</button>
+                <button class="btn btn-danger btn-sm" id="btnDisconnect" onclick="disconnect()" style="display:none">Desconectar</button>
+            </div>
+        </div>
+
+        <!-- Printer Selection -->
+        <div class="section">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                <div class="section-title" style="margin-bottom:0">🖨️ Impresora</div>
+                <button class="btn btn-secondary btn-sm" onclick="refreshPrinters()">🔄 Detectar</button>
+            </div>
+            <div class="printer-list" id="printerList">
+                <div style="color: #5a5a7a; font-size: 12px; text-align: center; padding: 10px;">Detectando impresoras...</div>
+            </div>
+        </div>
+
+        <!-- Paper Size -->
+        <div class="section">
+            <div class="section-title">📄 Tamaño de Papel</div>
+            <div class="paper-selector">
+                <div class="paper-option selected" id="paper80" onclick="setPaperWidth('80mm')">
+                    <div class="size">80mm</div>
+                    <div class="label">Estándar</div>
+                </div>
+                <div class="paper-option" id="paper58" onclick="setPaperWidth('58mm')">
+                    <div class="size">58mm</div>
+                    <div class="label">Pequeño</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-row">
+            <button class="btn btn-success" onclick="testPrint()" style="flex:1">🧾 Imprimir Prueba</button>
+        </div>
+
+        <!-- Logs -->
+        <div class="section">
+            <div class="section-title">📋 Registro de Actividad</div>
+            <div class="log-box" id="logBox"></div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,441 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  fullName  String
+  password  String
+  phone     String?
+  role      Role     @default(WAITER)
+  points    Int      @default(0) // Puntos de fidelidad (Loyalty)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders             Order[]
+  attendances        Attendance[]
+  payments           Payment[]
+  billingDocs        BillingDocument[]
+  securityLogs       SecurityLog[]
+  inventoryMoves     InventoryMovement[]
+  rewardTransactions RewardTransaction[]
+}
+
+enum Role {
+  ADMINISTRATOR
+  WAITER
+  CASHIER
+  KITCHEN
+  CUSTOMER
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[]
+}
+
+model Product {
+  id            String   @id @default(uuid())
+  name          String
+  description   String?
+  price         Decimal  @db.Decimal(10, 2)
+  categoryId    String
+  stockQuantity Int      @default(0)
+  minStock      Int      @default(5)
+  isActive      Boolean  @default(true)
+  imageUrl      String?
+  model3dUrl    String? // URL al modelo 3D (.gltf, .spline)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  category           Category            @relation(fields: [categoryId], references: [id])
+  orderItems         OrderItem[]
+  inventoryMovements InventoryMovement[]
+}
+
+model Table {
+  id        String      @id @default(uuid())
+  number    Int         @unique
+  capacity  Int
+  status    TableStatus @default(AVAILABLE)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  qrSessions       QrSession[]
+  customerSessions CustomerSession[]
+  orders           Order[]
+  reservations     Reservation[]
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+}
+
+model QrSession {
+  id                       String        @id @default(uuid())
+  tableId                  String?
+  sessionToken             String        @unique
+  status                   SessionStatus @default(ACTIVE)
+  isMultiSession           Boolean       @default(true)
+  currentCustomerSessionId String?
+  customerName             String?
+  orderType                String?
+  expiresAt                DateTime
+  createdAt                DateTime      @default(now())
+  updatedAt                DateTime      @updatedAt
+
+  table            Table?            @relation(fields: [tableId], references: [id])
+  customerSessions CustomerSession[]
+  orders           Order[]
+  reservations     Reservation[]
+}
+
+enum SessionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  COMPLETED
+}
+
+model CustomerSession {
+  id           String        @id @default(uuid())
+  qrSessionId  String
+  tableId      String?
+  customerName String
+  orderType    String
+  status       SessionStatus @default(ACTIVE)
+  sessionStart DateTime      @default(now())
+  sessionEnd   DateTime?
+  expiresAt    DateTime
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  qrSession QrSession @relation(fields: [qrSessionId], references: [id])
+  table     Table?    @relation(fields: [tableId], references: [id])
+}
+
+model Order {
+  id            String        @id @default(uuid())
+  tableId       String?
+  userId        String?
+  qrSessionId   String?
+  customerName  String
+  orderType     OrderType     @default(DINE_IN)
+  status        OrderStatus   @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING)
+  subtotal      Decimal       @default(0) @db.Decimal(10, 2)
+  tax           Decimal       @default(0) @db.Decimal(10, 2)
+  total         Decimal       @default(0) @db.Decimal(10, 2)
+  notes         String?
+  isPrinted     Boolean       @default(false)
+  printedAt     DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  table              Table?              @relation(fields: [tableId], references: [id])
+  user               User?               @relation(fields: [userId], references: [id])
+  qrSession          QrSession?          @relation(fields: [qrSessionId], references: [id])
+  items              OrderItem[]
+  billingDocs        BillingDocument[]
+  rewardTransactions RewardTransaction[]
+}
+
+enum OrderType {
+  DINE_IN
+  TAKEAWAY
+  DELIVERY
+}
+
+enum OrderStatus {
+  PENDING
+  PREPARING
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+}
+
+model OrderItem {
+  id         String   @id @default(uuid())
+  orderId    String
+  productId  String
+  quantity   Int
+  unitPrice  Decimal  @db.Decimal(10, 2)
+  totalPrice Decimal  @db.Decimal(10, 2)
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model Reservation {
+  id              String            @id @default(uuid())
+  tableId         String
+  qrSessionId     String?
+  customerName    String
+  reservationDate DateTime          @db.Date
+  reservationTime String // Or Time data type
+  partySize       Int               @default(1)
+  status          ReservationStatus @default(PENDING)
+  notes           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  table     Table      @relation(fields: [tableId], references: [id])
+  qrSession QrSession? @relation(fields: [qrSessionId], references: [id])
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+// Empleados y Planilla
+model Attendance {
+  id          String           @id @default(uuid())
+  employeeId  String
+  date        DateTime         @db.Date
+  checkIn     DateTime?
+  checkOut    DateTime?
+  hoursWorked Decimal          @default(0) @db.Decimal(5, 2)
+  status      AttendanceStatus @default(ABSENT)
+  notes       String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  employee User @relation(fields: [employeeId], references: [id])
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  HALF_DAY
+}
+
+model Payment {
+  id             String        @id @default(uuid())
+  employeeId     String
+  periodStart    DateTime      @db.Date
+  periodEnd      DateTime      @db.Date
+  totalHours     Decimal       @default(0) @db.Decimal(5, 2)
+  totalDays      Int           @default(0)
+  baseAmount     Decimal       @default(0) @db.Decimal(10, 2)
+  overtimeAmount Decimal       @default(0) @db.Decimal(10, 2)
+  deductions     Decimal       @default(0) @db.Decimal(10, 2)
+  bonuses        Decimal       @default(0) @db.Decimal(10, 2)
+  netAmount      Decimal       @db.Decimal(10, 2)
+  paymentStatus  PaymentStatus @default(PENDING)
+  paymentMethod  String?
+  paymentDate    DateTime?     @db.Date
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  employee User @relation(fields: [employeeId], references: [id])
+}
+
+// Inventario
+model InventoryMovement {
+  id           String       @id @default(uuid())
+  productId    String
+  movementType MovementType
+  quantity     Int
+  reason       String?
+  userId       String?
+  createdAt    DateTime     @default(now())
+
+  product Product @relation(fields: [productId], references: [id])
+  user    User?   @relation(fields: [userId], references: [id])
+}
+
+enum MovementType {
+  IN
+  OUT
+  ADJUSTMENT
+}
+
+// Facturación Electrónica (SUNAT)
+model BillingDocument {
+  id              String       @id @default(uuid())
+  orderId         String?
+  documentType    DocumentType
+  documentNumber  String
+  customerName    String
+  customerRuc     String?
+  customerAddress String?
+  customerEmail   String?
+  customerPhone   String?
+  paymentMethod   String       @default("efectivo")
+  subtotal        Decimal      @default(0) @db.Decimal(10, 2)
+  igvIncluded     Boolean      @default(true)
+  igvAmount       Decimal      @default(0) @db.Decimal(10, 2)
+  total           Decimal      @default(0) @db.Decimal(10, 2)
+
+  // SUNAT Specific fields
+  sunatStatus SunatStatus @default(PENDING)
+  sunatCdr    String? // Base64 or path to CDR zip
+  sunatXml    String? // Signed XML content or path
+  sunatHash   String?
+
+  status      BillingStatus @default(ACTIVE)
+  qrCode      String?
+  notes       String?
+  createdById String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  order     Order? @relation(fields: [orderId], references: [id])
+  createdBy User?  @relation(fields: [createdById], references: [id])
+}
+
+enum DocumentType {
+  TICKET
+  BOLETA
+  FACTURA
+  NOTA_CREDITO
+  NOTA_DEBITO
+}
+
+enum SunatStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXCEPTION
+}
+
+enum BillingStatus {
+  ACTIVE
+  PAID
+  CANCELLED
+  COMPLETED
+}
+
+// Seguridad
+model SecurityLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  eventType String
+  severity  String   @default("low")
+  ipAddress String?
+  userAgent String?
+  details   Json?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+}
+
+model Setting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Loyalty (Sistema de Recompensas)
+model RewardTransaction {
+  id        String     @id @default(uuid())
+  userId    String
+  points    Int
+  type      RewardType
+  orderId   String? // Opcional, si los puntos vienen o van hacia un pedido
+  reason    String?
+  createdAt DateTime   @default(now())
+
+  user  User   @relation(fields: [userId], references: [id])
+  order Order? @relation(fields: [orderId], references: [id])
+}
+
+enum RewardType {
+  EARNED
+  SPENT
+  ADJUSTMENT
+}
+
+// Newsletter
+model NewsletterSubscriber {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  firstName String?
+  lastName  String?
+  phone     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Reclamos (Quejas y Sugerencias)
+model Complaint {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?
+  phone     String?
+  issue     String   @db.Text
+  status    ComplaintStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ComplaintStatus {
+  PENDING
+  REVIEWING
+  RESOLVED
+}
+
+// Promociones (CMS)
+model Promotion {
+  id              String   @id @default(uuid())
+  title           String
+  description     String?
+  imageUrl        String?
+  videoUrl        String?
+  discountPercent Int?     // e.g. 50 = 50%
+  discountAmount  Decimal? @db.Decimal(10, 2)
+  isActive        Boolean  @default(true)
+  startDate       DateTime?
+  endDate         DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Banners y SVGs decorativos (CMS)
+model SiteBanner {
+  id         String         @id @default(uuid())
+  title      String
+  imageUrl   String?
+  svgContent String?        @db.Text
+  position   BannerPosition @default(HERO)
+  isActive   Boolean        @default(true)
+  sortOrder  Int            @default(0)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+}
+
+enum BannerPosition {
+  HERO
+  CAROUSEL
+  DECORATION
+}

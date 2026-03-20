@@ -1,0 +1,18 @@
+# Dependencies - MUST exclude to prevent Windows binaries overwriting Alpine ones
+node_modules
+
+# Build outputs
+dist
+
+# Environment files
+.env
+
+# Git
+.git
+.gitignore
+
+# Uploads (runtime data, not code)
+uploads
+
+# Temp files
+temp_receipts

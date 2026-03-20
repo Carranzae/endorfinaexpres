@@ -17,6 +17,7 @@ interface PrintInvoiceData {
 @Injectable()
 export class PrintService {
   private readonly logger = new Logger('PrintService');
+  private pendingInvoices: any[] = []; // In-memory queue for manual invoice prints
 
   constructor(
     private prisma: PrismaService,
@@ -52,7 +53,15 @@ export class PrintService {
         },
       });
 
-      this.logger.log(`✅ Invoice #${orderId.slice(-6)} printed successfully`);
+      // Add to in-memory queue so the kitchen-printer can poll it
+      this.pendingInvoices.push({
+        ...data,
+        id: updatedOrder.id, // ensure id is present for kitchen printer
+        createdAt: new Date().toISOString(),
+        isInvoiceRequest: true
+      });
+
+      this.logger.log(`✅ Invoice #${orderId.slice(-6)} queued for physical printer successfully`);
 
       // Broadcast to all connected clients (POS dashboard)
       this.eventsGateway.server.emit('invoice-printed', {
@@ -163,6 +172,26 @@ export class PrintService {
       return unprintedOrders;
     } catch (error) {
       this.logger.error(`Failed to fetch unprinted orders: ${error.message}`);
+      return [];
+    }
+  }
+
+  /**
+   * Get unprinted manual invoices (for kitchen-printer polling)
+   * This queue is filled when the user manually clicks "Print Invoice"
+   */
+  async getUnprintedInvoices(): Promise<any[]> {
+    try {
+      if (this.pendingInvoices.length === 0) return [];
+      
+      // Clone and empty the queue atomically
+      const invoicesToPrint = [...this.pendingInvoices];
+      this.pendingInvoices = [];
+      
+      this.logger.log(`📤 Sending ${invoicesToPrint.length} manual invoices to printer`);
+      return invoicesToPrint;
+    } catch (error) {
+      this.logger.error(`Failed to fetch unprinted invoices: ${error.message}`);
       return [];
     }
   }

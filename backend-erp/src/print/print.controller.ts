@@ -33,6 +33,17 @@ export class PrintController {
   }
 
   /**
+   * GET /print/invoices/unprinted
+   * Kitchen-printer app calls this periodically to fetch manual invoices
+   */
+  @Get('invoices/unprinted')
+  @HttpCode(HttpStatus.OK)
+  async getUnprintedInvoices() {
+    this.logger.debug('Fetching unprinted invoices for kitchen-printer');
+    return this.printService.getUnprintedInvoices();
+  }
+
+  /**
    * POST /print/order
    * Frontend calls this to send order to kitchen printer
    * Automatic printing for kitchen orders

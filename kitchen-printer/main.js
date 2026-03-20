@@ -10,8 +10,10 @@ const store = new Store();
 let mainWindow;
 let jwtToken = null;
 let pollInterval = null;
+let invoicePollInterval = null;
 let loginInterval = null;
 const printedOrders = new Set();
+const printedInvoices = new Set();
 let isProcessing = false;
 
 // ═══════════════════════════════════════════════════
@@ -49,6 +51,7 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
     if (pollInterval) clearInterval(pollInterval);
+    if (invoicePollInterval) clearInterval(invoicePollInterval);
     if (loginInterval) clearInterval(loginInterval);
     app.quit();
 });
@@ -109,9 +112,12 @@ async function tryLogin(apiUrl, email, password) {
             
             // Start polling
             if (pollInterval) clearInterval(pollInterval);
+            if (invoicePollInterval) clearInterval(invoicePollInterval);
             const interval = store.get('interval') || 5000;
             processOrders(apiUrl);
+            processInvoices(apiUrl);
             pollInterval = setInterval(() => processOrders(apiUrl), interval);
+            invoicePollInterval = setInterval(() => processInvoices(apiUrl), interval);
             return true;
         }
         sendToRenderer('log', '❌ No se recibió token. Verifica las credenciales.');
@@ -145,14 +151,15 @@ function createReceiptText(order, paperWidth, isInvoice = false) {
     text += separator;
     
     // Documento type
-    const docType = isInvoice ? 'FACTURA' : 'NOTA DE PEDIDO';
+    const docType = isInvoice ? 'COMPROBANTE DE PAGO / FACTURA' : 'NOTA DE PEDIDO';
     text += center(docType) + '\n';
     text += dashLine;
     
-    text += `#${order.id.slice(-6).toUpperCase()}\n`;
+    text += `#${(order.id || '').slice(-6).toUpperCase()}\n`;
     text += `FECHA: ${new Date(order.createdAt).toLocaleString('es-PE')}\n`;
     if (order.customerName) text += `CLIENTE: ${order.customerName.toUpperCase()}\n`;
-    if (order.table) text += `MESA: ${order.table.number}\n`;
+    if (isInvoice && order.customerRuc) text += `RUC/DNI: ${order.customerRuc}\n`;
+    if (order.table && order.table.number) text += `MESA: ${order.table.number}\n`;
     else if (order.type) {
         const typeStr = order.type === 'DINE_IN' ? 'EN LOCAL' : order.type === 'TAKEAWAY' ? 'PARA LLEVAR' : 'DELIVERY';
         text += `TIPO: ${typeStr}\n`;
@@ -347,6 +354,44 @@ async function markOrderAsPrinted(apiUrl, orderId) {
     } catch {}
 }
 
+async function processInvoices(apiUrl) {
+    if (!jwtToken) return;
+
+    try {
+        const res = await axios.get(`${apiUrl}/print/invoices/unprinted`, {
+            headers: { Authorization: `Bearer ${jwtToken}` },
+            timeout: 8000,
+        });
+        const invoices = Array.isArray(res.data) ? res.data : [];
+
+        if (invoices.length > 0) {
+            sendToRenderer('log', `🧾 ${invoices.length} factura(s) manual(es) detectada(s)`);
+            
+            const paperWidth = store.get('paperWidth') || '80mm';
+            const selectedPrinter = store.get('selectedPrinter') || null;
+
+            for (const invoice of invoices) {
+                if (!invoice.id) continue;
+                if (printedInvoices.has(invoice.id)) continue;
+
+                printedInvoices.add(invoice.id);
+                sendToRenderer('log', `🖨️ Imprimiendo Factura #${invoice.id.slice(-6).toUpperCase()}...`);
+
+                const text = createReceiptText(invoice, paperWidth, true);
+                const success = await printReceipt(text, selectedPrinter);
+
+                if (success) {
+                    sendToRenderer('log', `✅ Factura #${invoice.id.slice(-6).toUpperCase()} impresa con éxito`);
+                } else {
+                    printedInvoices.delete(invoice.id);
+                }
+            }
+        }
+    } catch (error) {
+        // Silent fail on polling errors so we don't spam logs
+    }
+}
+
 // ═══════════════════════════════════════════════════
 //  IPC HANDLERS (Renderer → Main)
 // ═══════════════════════════════════════════════════
@@ -356,6 +401,7 @@ ipcMain.handle('connect', async (_, data) => {
 
 ipcMain.handle('disconnect', () => {
     if (pollInterval) clearInterval(pollInterval);
+    if (invoicePollInterval) clearInterval(invoicePollInterval);
     jwtToken = null;
     sendToRenderer('connected', false);
     sendToRenderer('log', '🔌 Desconectado');
@@ -377,12 +423,12 @@ ipcMain.handle('set-paper-width', (_, width) => {
 
 ipcMain.handle('set-interval', (_, ms) => {
     store.set('interval', ms);
-    if (pollInterval) {
-        clearInterval(pollInterval);
-        const config = store.get('config');
-        if (config && jwtToken) {
-            pollInterval = setInterval(() => processOrders(config.apiUrl), ms);
-        }
+    if (pollInterval) clearInterval(pollInterval);
+    if (invoicePollInterval) clearInterval(invoicePollInterval);
+    const config = store.get('config');
+    if (config && jwtToken) {
+        pollInterval = setInterval(() => processOrders(config.apiUrl), ms);
+        invoicePollInterval = setInterval(() => processInvoices(config.apiUrl), ms);
     }
     sendToRenderer('log', `⏱️ Intervalo: cada ${ms / 1000}s`);
 });
